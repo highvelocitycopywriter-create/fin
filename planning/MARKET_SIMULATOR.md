@@ -56,8 +56,10 @@ L = cholesky(C)              # lower-triangular
 Z_correlated = L @ Z_independent
 ```
 
-Cholesky guarantees the resulting covariance structure for any valid (positive
-semi-definite) correlation matrix.
+Cholesky reproduces the target covariance structure for any **positive definite**
+correlation matrix. `np.linalg.cholesky` requires positive definiteness, not mere
+positive semi-definiteness — a degenerate (rank-deficient) matrix will fail at
+runtime, which is the signal to revisit the correlation table.
 
 Correlation structure (from `seed_prices.py`):
 
@@ -72,8 +74,9 @@ Groups: **tech** = {AAPL, GOOGL, MSFT, AMZN, META, NVDA, NFLX}, **finance** =
 {JPM, V}. TSLA is listed in tech but is forced to 0.3 with everything — it does
 its own thing.
 
-The matrix is rebuilt whenever a ticker is added or removed (`O(n^2)`, but `n`
-stays small — well under 50).
+The matrix is rebuilt whenever a ticker is added or removed. Rebuilding fills an
+`O(n^2)` matrix and then runs an `O(n^3)` Cholesky factorization, but `n` stays
+small — well under 50 — so the cost is negligible.
 
 ## Random Events
 
@@ -237,4 +240,5 @@ Covered by `backend/tests/market/test_simulator.py` and
   valid.
 - The async source seeds the cache on `start()` and ticks on the interval.
 
-Run with `uv run --extra dev pytest tests/market/ -v`.
+Run with `cd backend && uv run --extra dev pytest tests/market/ -v` (the project
+is defined in `backend/pyproject.toml`).
